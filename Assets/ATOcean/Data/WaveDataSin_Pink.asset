@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8803915cab3e60f45be8bda9d85bd00c, type: 3}
+  m_Name: WaveDataSin_Pink
+  m_EditorClassIdentifier: 
+  waveCount: 5
+  amplitudeRand: 0.08
+  wavelengthRand: 12
+  phaseRand: 2
+  steepnessRand: 0.5
+  randomness: 0.5
+  waves:
+  - direction: {x: -0.93710166, y: 0, z: -0.34905657}
+    amplitude: 0.062227357
+    wavelength: 10.756157
+    phase: 1.9294415
+    steepness: 8.900469
+  - direction: {x: -0.49939737, y: 0, z: -0.866373}
+    amplitude: 0.08978837
+    wavelength: 7.371537
+    phase: 1.7680756
+    steepness: 3.5012386
+  - direction: {x: 0.6473874, y: 0, z: -0.76216114}
+    amplitude: 0.082442276
+    wavelength: 8.245282
+    phase: 1.4970319
+    steepness: 6.6480002
+  - direction: {x: 0.17956594, y: 0, z: 0.98374593}
+    amplitude: 0.05139618
+    wavelength: 10.196999
+    phase: 1.783434
+    steepness: 9.356109
+  - direction: {x: -0.033613868, y: 0, z: 0.9994349}
+    amplitude: 0.09123681
+    wavelength: 11.036415
+    phase: 1.406384
+    steepness: 7.4773397

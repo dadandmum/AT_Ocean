@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 81652c826938d034eb0aa3760689e3ee
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - filter: {instanceID: 0}
+  - meshRenderer: {instanceID: 0}
+  - mesh: {instanceID: 0}
+  - sunLight: {instanceID: 0}
+  - material: {fileID: 2100000, guid: 7a2a175a7ff5ee64c9bef5743fd82b67, type: 2}
+  - waveData: {fileID: 11400000, guid: 7c107c4f0415a1247adb31042ed2136f, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

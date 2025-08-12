@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8803915cab3e60f45be8bda9d85bd00c, type: 3}
+  m_Name: WaveDataSin_Sunset
+  m_EditorClassIdentifier: 
+  waveCount: 5
+  amplitudeRand: 0.1
+  wavelengthRand: 8
+  phaseRand: 4
+  steepnessRand: 0.5
+  randomness: 0.5
+  waves:
+  - direction: {x: -0.042106517, y: 0, z: 0.9991131}
+    amplitude: 0.08166411
+    wavelength: 7.49001
+    phase: 3.6373975
+    steepness: 6.3157005
+  - direction: {x: -0.9999405, y: 0, z: 0.010908546}
+    amplitude: 0.05365491
+    wavelength: 4.710152
+    phase: 3.1848783
+    steepness: 5.5174084
+  - direction: {x: -0.9247599, y: 0, z: 0.3805512}
+    amplitude: 0.07885285
+    wavelength: 6.7919316
+    phase: 2.643911
+    steepness: 3.7179928
+  - direction: {x: -0.81328356, y: 0, z: -0.5818676}
+    amplitude: 0.05237325
+    wavelength: 4.512439
+    phase: 3.502252
+    steepness: 4.085504
+  - direction: {x: 0.39771742, y: 0, z: 0.91750795}
+    amplitude: 0.068768345
+    wavelength: 7.1188884
+    phase: 3.6269274
+    steepness: 7.254109
