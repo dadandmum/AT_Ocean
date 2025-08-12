@@ -446,7 +446,7 @@ namespace ATOcean
             m.SetVector("_WaveWorldPos", transform.position);
         }
 
-        private void OnPreRender()
+        private void LateUpdate()
         {
             UpdateMaterial(material);
             UpdateMaterial(materialExtended);

@@ -307,7 +307,7 @@ Shader "Custom/ATOceanWater"
 			    
                 #ifdef _EXTENDED_WAVE
                     // 让extend 和近处的wave 稍微有一点接触，所以取0.47
-			        float d = distance(worldPos, float3(_WaveWorldPos.x, _ViewOrigin.y, _WaveWorldPos.z)) - _DomainSize * 0.47f;
+			        float d = distance(worldPos, float3(_WaveWorldPos.x, _ViewOrigin.y, _WaveWorldPos.z)) - _DomainSize * 0.45f;
                     float w = saturate(d * _InvDomainSize * 1.0f);
                     return smoothstep(0.0f, 0.1f, w);
                 #else

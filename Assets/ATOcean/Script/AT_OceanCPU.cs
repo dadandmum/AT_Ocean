@@ -23,6 +23,9 @@ namespace ATOcean
         [BoxGroup("ATOcean")]
         public float tDivision = 1f;
 
+        [BoxGroup("ATOcean")]
+        public bool recalculateNormal = false;
+
 
         public override void InitParameters()
         {
@@ -51,10 +54,16 @@ namespace ATOcean
                 }
             }
 
-            mesh.SetVertices(vertices);
+            mesh.SetVertices(vertUpdate);
             mesh.SetNormals(normals);
             mesh.SetColors(colors);
 
+            if ( recalculateNormal )
+                mesh.RecalculateNormals();
+
+            //mesh.vertices = vertUpdate;
+            //mesh.normals = normals;
+            //mesh.colors = colors;
         }
 
         // edit this function to implement different wave model

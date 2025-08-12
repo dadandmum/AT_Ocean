@@ -24,36 +24,38 @@ namespace ATOcean
         [Min(1)]
         [MaxValue(10)]
         [Tooltip("模拟的波的数量，波数量过多会影响计算效率,建议取1-10之间")]
-        public int waveCount = 5;
+        public int waveCount = 5; // the number of waves to simulate
         [BoxGroup("Waves")]
         [Min(0.001f)]
         [Tooltip("波振幅A的随机范围，随机取值范围为(( 1 - randomness) * amplitudeRand, amplitudeRand)，单位为Unity内的长度单位")]
-        public float amplitudeRand = 0.1f;
+        public float amplitudeRand = 0.1f; // the random range of the wave amplitude
         [BoxGroup("Waves")]
         [Min(0.001f)]
         [Tooltip("波长L的随机范围，随机取值范围为(( 1 - randomness) * wavelengthRand, wavelengthRand)，单位为Unity内的长度单位")]
-        public float wavelengthRand = 2.0f;
+        public float wavelengthRand = 2.0f; // the random range of the wave wavelength
         [BoxGroup("Waves")]
         [Min(0.001f)]
         [Tooltip("波时间相位phi的随机范围，随机取值范围为(( 1 - randomness) * phaseRand, phaseRand)")]
-        public float phaseRand = 3.0f;
+        public float phaseRand = 3.0f; // the random range of the wave phase
         [BoxGroup("Waves")]
         [Min(0.001f)]
         [MaxValue(1.0f)]
         [Tooltip("用于Gerster波，表示横向偏移幅度，最大取值由波长和振幅限制，随机取值范围为(( 1 - randomness) *  steepnessRand * maxSteepness , steepnessRand * steepnessRand)")]
-        public float steepnessRand = 0.5f;
+        public float steepnessRand = 0.5f;  // the random range of the wave steepness
 
         [BoxGroup("Waves")]
         [Min(0.001f)]
         [MaxValue(1.0f)]
         [Tooltip("波参数的随机性，取值范围[0,1]，1为完全随机，0为完全确定")]
-        public float randomness = 0.5f;
+        public float randomness = 0.5f; // the randomness of the wave parameters, range [0,1], 1 is completely random, 0 is completely determined
 
         public List<SinusoidWaveInfo> waves = new List<SinusoidWaveInfo>();
 
 
         [BoxGroup("Waves")]
+        [Tooltip("根据配置随机生成波参数")]
         [Button]
+        // generate waves according to the configuration and save them to the waves list
         public void SetupWaves()
         {
             if (waves.Count > 0)
