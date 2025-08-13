@@ -17,7 +17,7 @@ namespace ATOcean
 
     }
 
-    [CreateAssetMenu(fileName = "NewWaveData", menuName = "ATOcean/WaveData")]
+    [CreateAssetMenu(fileName = "ATO_WaveData", menuName = "ATOcean/WaveData")]
     public class AT_OceanWaveData : ScriptableObject
     {
         [BoxGroup("Waves")]

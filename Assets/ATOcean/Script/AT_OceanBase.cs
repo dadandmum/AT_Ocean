@@ -1,6 +1,5 @@
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
-using System.Drawing;
 using UnityEngine;
 
 namespace ATOcean
@@ -52,8 +51,6 @@ namespace ATOcean
         [BoxGroup("ATOcean")]
         public Material materialExtended;
 
-        [BoxGroup("ATOcean/Settings")]
-        public bool wireframe;
 
         [BoxGroup("RealTimeParameters")]
         [HideInInspector]
@@ -91,22 +88,19 @@ namespace ATOcean
 
         [Button]
         virtual public void Setup()
-        { 
-            SetupReference();
-            InitParameters();
+        {
             InitMesh();
         }
 
         public void OnEnable()
         {
-            SetupReference();
-            InitParameters();
             InitMesh();
-
         }
 
-        public virtual void SetupReference()
+
+        public virtual void InitMesh()
         {
+            // Setup Reference
             filter = GetComponent<MeshFilter>();
 
             if (filter == null)
@@ -118,14 +112,56 @@ namespace ATOcean
 
             meshRenderer.material = material;
 
+            // Init Variables
+            vertices = new Vector3[resolution * resolution];
+            indices = new int[(resolution - 1) * (resolution - 1) * 6];
+            normals = new Vector3[resolution * resolution];
+            vertUpdate = new Vector3[resolution * resolution];
+            uvs = new Vector2[resolution * resolution];
+            colors = new UnityEngine.Color[resolution * resolution];
+
+            // Create Mesh
+
+            mesh = new Mesh();
+
+            mesh.Clear();
+            mesh.name = "AT_Ocean_Mesh";
+
+            // Setup init data 
+
+            indiceCount = 0;
+            for (int i = 0; i < resolution; i++)
+            {
+                for (int j = 0; j < resolution; j++)
+                {
+                    SetInitData(i, j);
+                }
+            }
+
+
+            // Init Mesh
+            mesh.vertices = vertices;
+            mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+            mesh.normals = normals;
+            mesh.colors = colors;
+            mesh.uv = uvs;
+
+            //mesh.UploadMeshData(false);
+            mesh.RecalculateNormals();
+
+            filter.mesh = mesh;
+
+
+
             // if we use extend mesh, then create an sub gameobject for extended mesh
             if (useExtendMesh)
             {
+                // Setup Reference
                 var children = new List<Transform>(GetComponentsInChildren<Transform>());
                 Transform root = null;
-                if ( children != null && children.Count > 0 )
+                if (children != null && children.Count > 0)
                     root = children.Find(x => x.name == "MeshExtended");
-                if ( root == null )
+                if (root == null)
                 {
                     var go = new GameObject("MeshExtended");
                     go.transform.SetParent(transform);
@@ -133,48 +169,65 @@ namespace ATOcean
                 }
 
                 meshFilterExtended = root.GetComponent<MeshFilter>();
-                if ( meshFilterExtended == null )
+                if (meshFilterExtended == null)
                 {
                     meshFilterExtended = root.gameObject.AddComponent<MeshFilter>();
                 }
 
                 meshExtendedRenderer = root.GetComponent<MeshRenderer>();
-                if ( meshExtendedRenderer == null )
+                if (meshExtendedRenderer == null)
                 {
                     meshExtendedRenderer = root.gameObject.AddComponent<MeshRenderer>();
                 }
                 meshExtendedRenderer.material = materialExtended;
+
+                // Init Variables
+
+                verticesExtended = new Vector3[5];
+                indicesExtended = new int[12];
+                normalsExtended = new Vector3[5];
+
+                // Create Mesh
+                meshExtended = new Mesh();
+                meshExtended.Clear();
+                meshExtended.name = "AT_Ocean_ExtendedMesh";
+
+                // Set up init data
+                ComputeExtendedPlane();
+
+                // Init Mesh 
+                meshExtended.RecalculateBounds();
+                meshExtended.RecalculateNormals();
+
+                meshFilterExtended.mesh = meshExtended;
+
             }
             else
             {
-                if ( meshFilterExtended != null)
+                if (meshFilterExtended != null)
                 {
                     DestroyImmediate(meshFilterExtended.gameObject);
                     meshFilterExtended = null;
                 }
 
-                if ( meshExtendedRenderer != null)
+                if (meshExtendedRenderer != null)
                 {
                     meshExtendedRenderer = null;
                 }
 
-                if ( meshExtended != null)
+                if (meshExtended != null)
                 {
                     meshExtended = null;
                 }
-
             }
+        }
 
+        public virtual void SetupReference()
+        {
         }
 
         public virtual void InitParameters()
         {
-            vertices = new Vector3[resolution * resolution];
-            indices = new int[(resolution - 1) * (resolution - 1) * 6];
-            normals = new Vector3[resolution * resolution];
-            vertUpdate = new Vector3[resolution * resolution];
-            uvs = new Vector2[resolution * resolution];
-            colors = new UnityEngine.Color[resolution * resolution];
 
             if (useExtendMesh)
             {
@@ -219,45 +272,11 @@ namespace ATOcean
         [HideInInspector]
         int indiceCount = 0;
 
-        public virtual void InitMesh()
+        public virtual void InitMeshFinal()
         {
-            mesh = new Mesh();
-
-            mesh.Clear();
-            mesh.name = "AT_Ocean_Mesh";
-
-            indiceCount = 0;
-            for (int i = 0; i < resolution; i++)
-            {
-                for (int j = 0; j < resolution; j++)
-                {
-                    SetInitData(i, j);
-                }
-            }
-
-            mesh.vertices = vertices;
-            mesh.SetIndices(indices, MeshTopology.Triangles, 0);
-            mesh.normals = normals;
-            mesh.colors = colors;
-            mesh.uv = uvs;
-
-            //mesh.UploadMeshData(false);
-            mesh.RecalculateNormals();
-
-            filter.mesh = mesh;
 
             if ( useExtendMesh )
             {
-                meshExtended = new Mesh();
-                meshExtended.Clear();
-                meshExtended.name = "AT_Ocean_ExtendedMesh";
-
-                ComputeExtendedPlane();
-
-                meshExtended.RecalculateBounds();
-                meshExtended.RecalculateNormals();
-
-                meshFilterExtended.mesh = meshExtended;
             }
 
         }

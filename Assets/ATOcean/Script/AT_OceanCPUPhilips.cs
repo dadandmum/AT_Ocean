@@ -62,6 +62,7 @@ namespace ATOcean
                     if (kLength < 1e-6f)
                         continue;
 
+                    // 重力波频散关系: ω(k) = sqrt(g * |k|)
                     float omega = Mathf.Sqrt(g * kLength);
                     float omegaT = omega * t;
 

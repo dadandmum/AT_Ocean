@@ -6,7 +6,7 @@ using UnityEngine;
 namespace ATOcean
 {
 
-    [CreateAssetMenu(fileName = "AT_OceanPhiSpecData", menuName = "ATOcean/AT_OceanPhiSpecData")]
+    [CreateAssetMenu(fileName = "ATO_PhiSpecData", menuName = "ATOcean/PhiSpecData")]
     public class AT_OceanPhiSpecData : ScriptableObject
     {
         [BoxGroup("Input")]
@@ -149,22 +149,12 @@ namespace ATOcean
 
         }
 
-        /// <summary>
-        /// 生成标准正态分布 (高斯分布) 的随机数 (Box-Muller 变换)
-        /// </summary>
-        /// <returns>均值为0，标准差为1的随机数</returns>
-        private float RandomGaussian()
-        {
-            float u1 = Random.Range(1e-6f, 1.0f); // 避免 log(0)
-            float u2 = Random.Range(0.0f, 1.0f);
-            return Mathf.Sqrt(-2.0f * Mathf.Log(u1)) * Mathf.Cos(2.0f * Mathf.PI * u2);
-        }
 
         /// <summary>
         /// 生成一对互相独立，且标准正态分布 (高斯分布) 的随机数 (Box-Muller 极坐标)
         /// </summary>
         /// <returns>均值为0，标准差为1的随机数</returns>
-        private Vector2 RandomGaussianVariablePair()
+        static public Vector2 RandomGaussianVariablePair()
         {
             float x1, x2, w;
             do

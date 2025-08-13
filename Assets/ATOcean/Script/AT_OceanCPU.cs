@@ -27,10 +27,10 @@ namespace ATOcean
         public bool recalculateNormal = false;
 
 
-        public override void InitParameters()
+        public override void InitMesh()
         {
             timer = 0;
-            base.InitParameters();
+            base.InitMesh();
         }
 
 
