@@ -2,6 +2,7 @@ using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 namespace ATOcean
 {
@@ -11,8 +12,20 @@ namespace ATOcean
     {
         public Vector3 direction; // only consider (x,0,z)
         public float amplitude;  // A = amplitude
-        public float wavelength; // w = 2*pi/wavelength
-        public float phase; // time offset speed
+        public float wavelength; // omega = 2*pi/wavelength
+        public float phaseFrequency; // time offset speed
+        public float steepness; // for Gerstner Wave, should be < 1 / (w * A)
+
+    }
+
+
+    public struct SinusoidWaveInfoBuffer
+    {
+        public float dirX; 
+        public float dirZ;
+        public float amplitude;  // A = amplitude
+        public float wavelength; // omega = 2*pi/wavelength
+        public float phaseFrequency; // time offset speed
         public float steepness; // for Gerstner Wave, should be < 1 / (w * A)
 
     }
@@ -67,7 +80,7 @@ namespace ATOcean
                 info.direction = new Vector3(Random.Range(-1.0f, 1.0f), 0, Random.Range(-1.0f, 1.0f)).normalized;
                 info.amplitude = Random.Range( ( 1.0f - randomness), 1.0f ) * amplitudeRand;
                 info.wavelength = Random.Range((1.0f - randomness), 1.0f) * wavelengthRand;
-                info.phase = Random.Range((1.0f - randomness), 1.0f) * phaseRand;
+                info.phaseFrequency = Random.Range((1.0f - randomness), 1.0f) * phaseRand;
 
                 float maxSharpness = 1.0f / (2 * Mathf.PI / info.wavelength * info.amplitude);
                 info.steepness = Random.Range((1.0f - randomness), 1.0f) * steepnessRand * maxSharpness;
@@ -76,6 +89,37 @@ namespace ATOcean
                 waves.Add(info);
             }
         }
+
+        void ConvertData( SinusoidWaveInfo input , ref SinusoidWaveInfoBuffer output )
+        {
+
+            output.dirX = input.direction.x;
+            output.dirZ = input.direction.z;
+            output.amplitude = input.amplitude;
+            output.wavelength = input.wavelength;
+            output.phaseFrequency = input.phaseFrequency;
+            output.steepness = input.steepness;
+
+        }
+
+        public void SetParametersToShader(ComputeShader shader, int kernelIndex, ComputeBuffer paramsBuffer)
+        {
+            shader.SetInt(WAVE_COUNT_PROP, waves.Count);
+          
+
+            SinusoidWaveInfoBuffer[] wavesInfo = new SinusoidWaveInfoBuffer[waves.Count];
+
+            for (int i = 0; i < waves.Count; ++i)
+            {
+                ConvertData(waves[i], ref wavesInfo[i]);
+            }
+
+            paramsBuffer.SetData(wavesInfo);
+            shader.SetBuffer(kernelIndex, WAVE_INFOS_PROP, paramsBuffer);
+        }
+
+        readonly int WAVE_COUNT_PROP = Shader.PropertyToID("WaveCount");
+        readonly int WAVE_INFOS_PROP = Shader.PropertyToID("WaveInfos");
 
     }
 

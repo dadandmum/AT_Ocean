@@ -1,0 +1,65 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CalculateGerstnerWave
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Displacement;
+RWTexture2D<float4> Normal;
+
+float Time;
+float UnitWidth;
+uint Resolution;
+
+static const float PI = 3.1415926;
+
+struct WaveParameters
+{
+    float dirX; // wind direction 
+    float dirZ; 
+    float amplitude;  // A = amplitud 
+    float wavelength;  // wavelength, omega = 2 * pi / wavelength
+    float phaseFrequency; // phaseSpeed 
+    float steepness;  
+};
+
+uint WaveCount;
+
+StructuredBuffer<WaveParameters> WaveInfos;
+
+
+[numthreads(8,8,1)]
+void CalculateGerstnerWave(uint3 id : SV_DispatchThreadID)
+{
+    float x = UnitWidth * id.x - UnitWidth * Resolution * 0.5;
+    float z = UnitWidth * id.y - UnitWidth * Resolution * 0.5;
+    
+    float3 p = float3(0, 0, 0); 
+    float3 n = float3(0, 0, 0);
+    
+    for (uint k = 0; k < WaveCount; k++)
+    {
+        float3 dir = normalize(float3(WaveInfos[k].dirX, 0, WaveInfos[k].dirZ));
+        float omega = 2 * PI / WaveInfos[k].wavelength;
+        float theta = ( x * dir.x + z * dir.z) * omega + WaveInfos[k].phaseFrequency * Time;
+        
+        float p_y = WaveInfos[k].amplitude * sin(theta);
+        float p_x = WaveInfos[k].amplitude * WaveInfos[k].steepness * dir.x * cos(theta);
+        float p_z = WaveInfos[k].amplitude * WaveInfos[k].steepness * dir.z * cos(theta);
+        
+        float n_x = dir.x * omega * WaveInfos[k].amplitude * cos(theta);
+        float n_z = dir.z * omega * WaveInfos[k].amplitude * cos(theta);
+        // another way to make it more asthetic
+        // float n_x = x * dir.x * omega * WaveInfos[k].amplitude * cos(theta);
+        // float n_z = z * dir.z * omega * WaveInfos[k].amplitude * cos(theta);
+        float n_y = WaveInfos[k].steepness * omega * WaveInfos[k].amplitude * sin(theta);
+        
+        p = p + float3(p_x, p_y, p_z);
+        
+        n = n + float3(n_x, n_y, n_z); 
+    }
+    
+    // Displacement[id.xy] = float4(x, z, 0, 0) * 0.01;
+    Displacement[id.xy] = float4(p.x, p.y, p.z, 1.0 );
+    float3 normal = normalize(float3(-n.x, 1.0f - n.y, -n.z));
+    Normal[id.xy] = float4( normal , 1.0 ); 
+}

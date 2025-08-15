@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8803915cab3e60f45be8bda9d85bd00c, type: 3}
+  m_Name: WaveData_Gerster_GPU_Pink
+  m_EditorClassIdentifier: 
+  waveCount: 5
+  amplitudeRand: 0.1
+  wavelengthRand: 2
+  phaseRand: 3
+  steepnessRand: 0.1
+  randomness: 0.5
+  waves:
+  - direction: {x: -0.5163898, y: 0, z: 0.85635364}
+    amplitude: 0.068726994
+    wavelength: 1.1479489
+    phaseFrequency: 1.6355784
+    steepness: 0.2046028
+  - direction: {x: -0.6949554, y: 0, z: -0.71905285}
+    amplitude: 0.088967815
+    wavelength: 1.7327656
+    phaseFrequency: 2.4790764
+    steepness: 0.2418571
+  - direction: {x: 0.025778396, y: 0, z: 0.99966764}
+    amplitude: 0.09845998
+    wavelength: 1.8152256
+    phaseFrequency: 2.525035
+    steepness: 0.1476871
+  - direction: {x: -0.90644056, y: 0, z: -0.42233336}
+    amplitude: 0.06432376
+    wavelength: 1.3912346
+    phaseFrequency: 2.083871
+    steepness: 0.31732076
+  - direction: {x: 0.9742759, y: 0, z: 0.22535865}
+    amplitude: 0.051280554
+    wavelength: 1.3748441
+    phaseFrequency: 2.13892
+    steepness: 0.27845317

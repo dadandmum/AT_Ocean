@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8803915cab3e60f45be8bda9d85bd00c, type: 3}
+  m_Name: WaveData_500
+  m_EditorClassIdentifier: 
+  waveCount: 2
+  amplitudeRand: 0.05
+  wavelengthRand: 100
+  phaseRand: 2
+  steepnessRand: 0.1
+  randomness: 0.5
+  waves:
+  - direction: {x: -0.68926543, y: 0, z: -0.7245089}
+    amplitude: 0.036505263
+    wavelength: 69.912704
+    phaseFrequency: 1.9937077
+    steepness: 27.750656
+  - direction: {x: 0.96559775, y: 0, z: -0.2600403}
+    amplitude: 0.030600056
+    wavelength: 74.34561
+    phaseFrequency: 1.3185627
+    steepness: 28.571142

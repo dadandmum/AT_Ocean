@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 16e99c6b90cd28241a9b2fc4c7b59f95
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - material: {fileID: 2100000, guid: 17a4a4aa583ace4428a422ce5351c8b6, type: 2}
+  - waveData: {instanceID: 0}
+  - gerstnerWaveShader: {fileID: 7200000, guid: e89c43230749a3f4eab7a0677e93a0ee,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

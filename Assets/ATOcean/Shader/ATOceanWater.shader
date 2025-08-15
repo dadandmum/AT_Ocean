@@ -364,7 +364,7 @@ Shader "Custom/ATOceanWater"
                 
 
                 float3 normalDetailed = CalculateNormalWithDetail(uv,input.normalWS,input.tangentWS);
-
+                 
                 // half sssIndensity = GetSSSIndensity(input.color) * 0.05;
                 half sssIndensity = GetSimpleSSSIndensity(input.positionWS);
 
