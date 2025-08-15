@@ -1,0 +1,126 @@
+# ===============
+# Unity 项目忽略规则
+# ===============
+
+# 特定文件忽略
+/Assets/ATOcean/Output/*
+/Assets/ATOcean/Export/*
+
+# Unity 相关文件夹
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/Assets/AssetStoreTools*
+
+# Unity 5.x 以后的缓存目录
+/[Uu]ser[sS]ettings/
+
+# Unity 2020.3+ 新增的日志和缓存
+/[Uu]ser[sS]ettings/*
+/[Ll]ogs/
+/[Mm]emoryCaptures/
+
+# 构建输出目录（可自定义）
+/[Bb]uild/
+/[Bb]uilds/
+/[Dd]ist/
+
+# 包管理器本地包（可选忽略）
+/[Pp]ackages-local/
+
+# Unity Package Manager 缓存（可选）
+/[Pp]ackages/~*.*
+
+# Unity 版本控制元数据（如果你使用 Visible Meta Files 以外的模式）
+/[Uu]nityLock/*
+
+# macOS 系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+*.swp
+*~.dsstore
+
+# Windows 系统文件
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# 日志和临时文件
+*.tmp
+*.crdownload
+*.log
+
+# 编辑器备份文件
+*[Tt]emp.cs
+*[Tt]emp.meta
+*[Tt]emp/
+*~*
+
+# Visual Studio / Rider / 编辑器文件
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]*/
+[Aa][Rr][Mm]64/*
+*[Dd]ebug*/
+*[Dd]ebugPublic*/
+*[Rr]elease*/
+*[Rr]eleases*/
+*.pdb
+*.iws
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Unity 专用（排除特定资源）
+*.pidb
+*.orig
+*.scc
+*.svd
+*.pdb
+*.opendb
+
+# 项目特定文件（建议保留，但可忽略）
+ProjectSettings/ProjectVersion.txt
+ProjectSettings/ProjectSettings.asset.meta  # 可提交，但 meta 可忽略（不推荐）
+
+# 可选：忽略 Player.log（除非用于调试）
+Player.log
+
+# 包管理器本地覆盖（如果你使用 Packages/ 中的本地包）
+/[Pp]ackages/[Ll]ocal*
+
+# Android 构建
+[Oo]bj/[Ii]l2cpp*
+[Oo]bj/[Bb]G*
+[Oo]bj/[Dd]ata*
+[Oo]bj/[Ll]inkedBinaries*
+[Oo]bj/[Ll]inkedBinariesNoSmartMerge*
+[Oo]bj/[Rr]aw*
+[Oo]bj/[Ss]tagingArea*
+[Oo]bj/[Tt]inyCache*
+[Oo]bj/[Uu]WP*
+[Oo]bj/[Aa]ssetPackages*
+
+# iOS 构建
+/[Ii]OS/
+/[Ii]phone/
+/[Ii]pad/
+/[Ii]tunes/
+
+# 临时 Unity 文件（崩溃或临时保存）
+*.backup*
