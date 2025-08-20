@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.IO;
 using Sirenix.OdinInspector;
 
@@ -17,7 +17,7 @@ namespace ATOcean
             return noise ? noise : GenerateNoiseTexture(size, true);
         }
 
-        public static string NoiseTexturePath = "Assets/ATOcean/PreCompute";
+        public static string NoiseTexturePath = "Assets/ATOcean/Data/NoiseTexture";
         public static string GaussianNoiseName = "GaussianNoise";
 
         public static Texture2D GenerateNoiseTexture(int size, bool saveIntoAssetFile)
@@ -43,15 +43,6 @@ namespace ATOcean
 
             }
 
-//#if UNITY_EDITOR
-//            if (saveIntoAssetFile)
-//            {
-//                string filename = GaussianNoiseName + "_" + size.ToString() + "x" + size.ToString();
-//                string path = "Assets/"+ NoiseTexturePath+ "/";
-//                AssetDatabase.CreateAsset(noise, path + filename + ".asset");
-//                Debug.Log("Texture \"" + filename + "\" was created at path \"" + path + "\".");
-//            }
-//#endif
             return noise;
         }
 
@@ -62,7 +53,7 @@ namespace ATOcean
         /// <returns>均值为0，标准差为1的随机数</returns>
         static public float RandomGaussian()
         {
-            float u1 = Random.Range(1e-6f, 1.0f); // ���� log(0)
+            float u1 = Random.Range(1e-6f, 1.0f);  
             float u2 = Random.Range(0.0f, 1.0f);
             return Mathf.Sqrt(-2.0f * Mathf.Log(u1)) * Mathf.Cos(2.0f * Mathf.PI * u2);
         }
@@ -121,15 +112,15 @@ namespace ATOcean
             var path = folder + "/" + fileName + "_" + resolution + "x" + resolution;
             return SaveTextureToDisk(rt, path);
         }
-
-        /// <summary>
-        /// ���� Texture2D ��ָ��·����Assets ��ʼ��������Ѵ����򸲸�
+    
+         /// <summary>
+        /// 保存 Texture2D 到指定路径（Assets 开始），如果已存在则覆盖
         /// </summary>
         public static Texture2D SaveTexture2DPNG(Texture2D texture, string path)
         {
             var assetPath = path + ".png";
 
-            // ȷ��Ŀ¼����
+            // 确保目录存在
             string fullPath = Path.GetFullPath(assetPath);
             string dir = Path.GetDirectoryName(fullPath);
             if (!Directory.Exists(dir))
@@ -137,16 +128,16 @@ namespace ATOcean
                 Directory.CreateDirectory(dir);
             }
 
-            // �� Texture2D ����Ϊ PNG
+            // 将 Texture2D 编码为 PNG
             byte[] pngData = texture.EncodeToPNG();
 
-            // ֱ��д���ļ������ǣ�
+            // 直接写入文件（覆盖）
             File.WriteAllBytes(fullPath, pngData);
             Debug.Log($"Texture saved to: {fullPath}");
 
 #if UNITY_EDITOR
 
-            // ǿ��ˢ�� AssetDatabase
+            // 强制刷新 AssetDatabase
             AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
 
             TextureImporter importer = TextureImporter.GetAtPath(assetPath) as TextureImporter;
@@ -157,14 +148,14 @@ namespace ATOcean
                 importer.textureCompression = TextureImporterCompression.Uncompressed;
             }
 
-            // ��ȡ��Դ���󣨿����ں���ѡ�У�
+            // 获取资源对象（可用于后续选中）
             Texture2D savedTex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
             return savedTex;
 
-#endif
+#else
 
             return texture;
-
+#endif
             //if (savedTex != null)
             //{
             //    EditorGUIUtility.PingObject(savedTex);
@@ -172,65 +163,70 @@ namespace ATOcean
         }
 
 
+
         /// <summary>
-        /// ��������ֵ��RenderTexture����ΪEXR��ʽ
+        /// 将 Texture2D 保存为 EXR 文件到指定路径，如果已存在则覆盖
         /// </summary>
-        /// <param name="renderTexture">Ҫ�����RenderTexture</param>
-        /// <param name="path">����·��</param>
-        /// <returns>�Ƿ񱣴�ɹ�</returns>
+        /// <param name="texture2D">要保存的 Texture2D 对象</param>
+        /// <param name="path">保存路径（不包含文件扩展名）</param>
+        /// <returns>如果在编辑器模式下，返回保存后的 Texture2D 资源；否则返回 null</returns>
         public static Texture2D SaveTexture2D2EXR(Texture2D texture2D, string path)
         {
-
             try
             {
+                // 拼接完整的 EXR 文件路径
                 var assetPath = path + ".exr";
-                // ȷ��Ŀ¼����
+                // 获取文件的完整系统路径
                 string fullPath = Path.GetFullPath(assetPath);
-                // ȷ��Ŀ¼����
+                // 获取文件所在的目录路径
                 string directory = Path.GetDirectoryName(fullPath);
+                // 检查目录是否存在，如果不存在则创建
                 if (!Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }
 
-
-                // ����ΪEXR��ʽ��֧��HDR��
+                // 将 Texture2D 编码为 EXR 格式的字节数据，输出为浮点数格式
                 byte[] exrData = texture2D.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat);
 
-                // ���浽�ļ�
+                // 将编码后的字节数据写入文件，覆盖已存在的文件
                 File.WriteAllBytes(fullPath, exrData);
+                // 打印保存成功的日志信息
                 Debug.Log($"Texture saved to: {fullPath}");
 
 #if UNITY_EDITOR
-                // ǿ��ˢ�� AssetDatabase
+                // 强制刷新 AssetDatabase，确保新导入的资源被识别
                 AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
 
+                // 获取 EXR 文件的纹理导入器
                 TextureImporter importer = TextureImporter.GetAtPath(assetPath) as TextureImporter;
                 // if (importer != null)
                 {
+                    // 设置纹理不使用 sRGB 颜色空间
                     importer.sRGBTexture = false;
+                    // 设置纹理压缩质量为最高
                     importer.compressionQuality = 100;
+                    // 设置纹理不进行压缩
                     importer.textureCompression = TextureImporterCompression.Uncompressed;
                 }
-                // ��ȡ��Դ���󣨿����ں���ѡ�У�
+                // 从指定路径加载保存后的 Texture2D 资源
                 Texture2D savedTex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
                 return savedTex;
-
 #endif 
+                // 在非编辑器模式下返回 null
                 return null;
             }
             catch (System.Exception e)
             {
+                // 打印保存失败的错误日志
                 Debug.LogError($"Failed to save HDR RenderTexture: {e.Message}");
                 return null;
             }
         }
-
-
         public static Texture2D SaveTexture2DAsset(Texture2D texture, string path)
         {
             var assetPath = path + ".asset";
-            // ȷ��Ŀ¼����
+            
             string fullPath = Path.GetFullPath(assetPath);
             string dir = Path.GetDirectoryName(fullPath);
             if (!Directory.Exists(dir))
@@ -242,7 +238,6 @@ namespace ATOcean
             AssetDatabase.CreateAsset(texture, assetPath);
 
 
-            // ��ȡ��Դ���󣨿����ں���ѡ�У�
             Texture2D savedTex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
             return savedTex;
 #endif
@@ -255,19 +250,17 @@ namespace ATOcean
 
 
 
-        public static string WaveDataPath = "Assets/ATOcean/Data";
+        public static string WaveDataPath = "Assets/ATOcean/Data/WaveData";
 
         // Generate a new wave Data  
-        public static AT_OceanWaveData GernateWaveData()
+        public static AT_OceanWaveData GernateWaveData( string name_prefix = "")
         {
 #if UNITY_EDITOR
-            // ����ScriptableObjectʵ��
             AT_OceanWaveData asset = ScriptableObject.CreateInstance<AT_OceanWaveData>();
             asset.SetupWaves();
 
-            var assetPath = WaveDataPath + "/" + "WaveData_" + Random.Range(100, 999) + ".asset";
+            var assetPath = WaveDataPath + "/" + "WaveData_" + name_prefix + Random.Range(100, 999) + ".asset";
 
-            // ȷ��Ŀ¼����
             string directory = System.IO.Path.GetDirectoryName(assetPath);
             if (!System.IO.Directory.Exists(directory))
             {
@@ -275,7 +268,6 @@ namespace ATOcean
                 AssetDatabase.Refresh();
             }
 
-            // �����ʲ��ļ�
             AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

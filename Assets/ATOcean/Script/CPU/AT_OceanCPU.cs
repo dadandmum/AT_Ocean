@@ -3,7 +3,6 @@ using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
-using UnityEditorInternal;
 using UnityEngine;
 
 
@@ -17,7 +16,7 @@ namespace ATOcean
         #region Update
 
         [BoxGroup("RealTimeParameters")]
-        [ReadOnly]
+        [ReadOnly] 
         public float timer;
 
         [BoxGroup("ATOcean")]
@@ -25,7 +24,29 @@ namespace ATOcean
 
         [BoxGroup("ATOcean")]
         public bool recalculateNormal = false;
+        [BoxGroup("ATOcean")]
+        public bool simulateInEditor = true;
+        [BoxGroup("ATOcean")]
+        [GUIColor(0.8f,0.8f,0.2f)]
+        [Button(ButtonSizes.Large)]
 
+        public void CalculateNextStep()
+        {
+            float dt = 0.033f;
+            timer += dt;
+
+            simulateInEditor = false;
+
+            // calculate time elapse by .NET timer
+            var startTime = System.DateTime.Now;
+
+            EvalulateWave(timer, dt);
+
+            // calculate time elapse
+            var endTime =  System.DateTime.Now;
+            var timeElapse = endTime - startTime;
+            Debug.Log("Time Elapse: " + timeElapse.TotalMilliseconds + " ms");
+        }
 
         public override void InitMesh()
         {
@@ -36,21 +57,24 @@ namespace ATOcean
 
         public void Update()
         {
-            timer += Time.deltaTime / tDivision;
-            EvalulateWave(timer);
+            if (simulateInEditor || Application.isPlaying)
+
+            {
+                timer += Time.deltaTime / tDivision;
+                EvalulateWave(timer, Time.deltaTime / tDivision);
+            }
         }
 
 
-        virtual public void EvalulateWave( float t)
+        virtual public void EvalulateWave( float t , float dt )
         {
-    
             // This is the main loop
             // evaluate the wave position offset
             for (int i = 0; i < resolution; i++)
             {
                 for (int j = 0; j < resolution; j++)
                 {
-                    EvaluateMesh(i, j , t );
+                    EvaluateMesh(i, j , t , dt );
                 }
             }
 
@@ -66,11 +90,20 @@ namespace ATOcean
             //mesh.colors = colors;
         }
 
+
+
+        public int GetCurrentIndex(int i, int j)
+        {
+            return i * resolution + j;
+        }
+
+
         // edit this function to implement different wave model
-        virtual public void EvaluateMesh( int i , int j , float t )
+        virtual public void EvaluateMesh( int i , int j , float t , float dt  )
         {
             // Here is an example of single sinusoid wave 
-            var currentIndex = i * resolution + j;
+            var currentIndex = GetCurrentIndex(i, j);
+
 
             // get the vertex from vertices
             var tempVertex = vertices[currentIndex];

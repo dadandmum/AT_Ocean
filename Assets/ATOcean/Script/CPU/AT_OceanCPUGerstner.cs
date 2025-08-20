@@ -1,4 +1,4 @@
-using Sirenix.OdinInspector;
+ï»¿using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,8 +9,8 @@ namespace ATOcean
 
     public class AT_OceanCPUGerstner : AT_OceanCPU
     {
-
         [BoxGroup("ATOcean/Data")]
+        [InfoBox("Gerstneræ³¢æ•°æ®,ç‚¹å‡»")]
         [InlineEditor]
         public AT_OceanWaveData waveData;
 
@@ -21,20 +21,21 @@ namespace ATOcean
 
         }
 
-        public override void EvaluateMesh(int i, int j, float t)
+        public override void EvaluateMesh(int i, int j, float t, float dt)
         {
-            // µ±Ç°¶¥µãµÄË÷Òı
-            var currentIndex = i * resolution + j;
+            // å½“å‰é¡¶ç‚¹çš„ç´¢å¼•
+            var currentIndex = GetCurrentIndex(i, j);
 
-            // »ñÈ¡¶¥µã³õÊ¼×ø±ê
+
+            // è·å–é¡¶ç‚¹åˆå§‹åæ ‡
             var vertex = vertices[currentIndex];
 
-            Vector3 p = new Vector3(0, 0, 0); // Î»ÖÃÆ«ÒÆ
-            Vector3 n = new Vector3(0, 0, 0); // ·¨Ïß
+            Vector3 p = new Vector3(0, 0, 0); // ä½ç½®åç§»
+            Vector3 n = new Vector3(0, 0, 0); // æ³•çº¿
 
             // reference : https://zhuanlan.zhihu.com/p/31670275
 
-            // ±éÀúÃ¿Ò»¸ö²¨ÀË
+            // éå†æ¯ä¸€ä¸ªæ³¢æµª
             for (int k = 0; k < waveData.waves.Count; k++)
             {
                 var wave_k = waveData.waves[k];

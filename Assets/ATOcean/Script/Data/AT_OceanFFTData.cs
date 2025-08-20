@@ -103,8 +103,8 @@ namespace ATOcean
             swell.fetch = 300000f;
             swell.spreadBlend = Random.Range(1.0f - spreadRand, 1.0f);
             swell.swell = 1.0f;
-            local.peakEnhancement = 3.3f;
-            local.shortWavesFade = 0.01f;
+            swell.peakEnhancement = 3.3f;
+            swell.shortWavesFade = 0.01f;
 
         }
 

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
 namespace ATOcean
@@ -21,16 +20,16 @@ namespace ATOcean
         //[ReadOnly]
         //public int cascadeLevel = 3;
 
-        [BoxGroup("AT_Ocean/Settings")]
+        [BoxGroup("AT_Ocean/FFT")]
         [InlineEditor]
         public AT_OceanFFTData waveSettings;
 
-        [BoxGroup("AT_Ocean/Cascade")]
+        [BoxGroup("AT_Ocean/FFT")]
         [ReadOnly]
         public List<ATO_FFTOceanCascade> waveCascade;
 
 
-        [BoxGroup("AT_Ocean/NoiseTexture")]
+        [BoxGroup("AT_Ocean/FFT/Noise")]
         public Texture2D noiseTexture;
 
         //[SerializeField]
@@ -41,32 +40,53 @@ namespace ATOcean
         //float lengthScale2 = 5;
 
 
-        [BoxGroup("AT_Ocean/ComputeShader")]
+        [BoxGroup("AT_Ocean/FFT/ComputeShader")]
         [SerializeField]
         ComputeShader initialSpectrumShader;
-        [BoxGroup("AT_Ocean/ComputeShader")]
+        [BoxGroup("AT_Ocean/FFT/ComputeShader")]
         [SerializeField]
         ComputeShader timeDependentSpectrumShader;
-        [BoxGroup("AT_Ocean/ComputeShader")]
+        [BoxGroup("AT_Ocean/FFT/ComputeShader")]
         [SerializeField]
         ComputeShader texturesMergerShader;
+        [BoxGroup("AT_Ocean/FFT/ComputeShader")]
+        [SerializeField]
+        ComputeShader fftShader;
 
-        [Button]
+        [BoxGroup("AT_Ocean/FFT/ComputeShader")]
+        [HideInInspector]
+        ATO_FastFourierTransform fft;
+
+
+        [BoxGroup("AT_Ocean/FFT/Noise")]
+        [Button("Generate Noise Texture" , ButtonSizes.Large)]
+        [GUIColor(0.8f,0.8f,0.2f)]
         public void GenerateNoiseTexture()
         {
             var noise = AT_OceanUtiliy.GenerateNoiseTexture(renderResolution, true);
             noiseTexture = noise;
 
-            EditorGUIUtility.PingObject(noise);
+#if UNITY_EDITOR
+            UnityEditor.EditorGUIUtility.PingObject(noise);
+#endif
+
         }
 
 
-        public static string TempTexturePath = "Assets/ATOcean/Result/JONSWAP";
+        [BoxGroup("AT_Ocean/FFT/Output")]
+        public string TempTexturePath = "Assets/ATOcean/Output/FFT";
 
         public static string H0TextureName = "H0Texture";
-        public static string precomputeTextureName = "PrecomputeTexture";
+        public static string specPrecomputeTextureName = "SpecPrecomputeTexture";
+        public static string FFTPrecomputeTextureName = "FFTPrecomputeTexture";
 
-        [Button]
+        [BoxGroup("AT_Ocean/FFT/Output")]
+        public int outputCascadeLevel = 0;
+
+
+        [BoxGroup("AT_Ocean/FFT/Output")]
+        [Button("Generate H0 Texture" , ButtonSizes.Large)]
+        [GUIColor(0.8f,0.8f,0.2f)]
         public void GenerateH0Texture()
         {
             var gaussianNoise = noiseTexture;
@@ -78,10 +98,12 @@ namespace ATOcean
 
             // run and save data to rt 
 
-            float lengthScale1 = renderCascades[1].lengthScale;
-            float lengthScale0 = renderCascades[0].lengthScale;
-            float boundary1 = 2 * Mathf.PI / lengthScale1 * 6f;
-            tempCascade.RunInitials(waveSettings, lengthScale0, 0.0001f, boundary1);
+            float lengthScale = renderCascades[outputCascadeLevel].lengthScale;
+            float boundaryIn = 0;
+            float boundaryOut = 0;
+            CalculateBoundary(outputCascadeLevel, out boundaryIn, out boundaryOut);
+
+            tempCascade.RunInitials(waveSettings, lengthScale, boundaryIn, boundaryOut);
 
 
             var tex2D = AT_OceanUtiliy.SaveTextureToDisk(
@@ -91,31 +113,78 @@ namespace ATOcean
                 renderResolution
                 );
 
-            EditorGUIUtility.PingObject(tex2D);
+#if UNITY_EDITOR
+            UnityEditor.EditorGUIUtility.PingObject(tex2D);
+#endif
 
+        }
 
-            AT_OceanUtiliy.SaveTextureToDisk(
+        [BoxGroup("AT_Ocean/FFT/Output")]
+        [Button("Generate Specctrum Precompute Texture" , ButtonSizes.Large)]
+        [GUIColor(0.8f,0.8f,0.2f)] 
+        public void GeneratePrecomputeTexture()
+        {
+            var gaussianNoise = noiseTexture;
+            // init cascade 
+            var tempCascade = new ATO_FFTOceanCascade(renderResolution, 
+                initialSpectrumShader,
+                gaussianNoise);
+            // run and save data to rt 
+
+            float lengthScale = renderCascades[outputCascadeLevel].lengthScale;
+            float boundaryIn = 0;
+            float boundaryOut = 0;
+            CalculateBoundary(outputCascadeLevel, out boundaryIn, out boundaryOut);
+            tempCascade.RunInitials(waveSettings, lengthScale, boundaryIn, boundaryOut);
+
+            var tex2D = AT_OceanUtiliy.SaveTextureToDisk(
                 tempCascade.PrecomputedData,
                 TempTexturePath,
-                precomputeTextureName,
+                specPrecomputeTextureName,
                 renderResolution
                 );
+
+#if UNITY_EDITOR
+            UnityEditor.EditorGUIUtility.PingObject(tex2D);
+#endif
+
         }
 
 
-        public override void InitMesh()
-        {
-            base.InitMesh();
 
-            InitRender();
+        [BoxGroup("AT_Ocean/FFT/Output")]
+        [Button("Generate FFT Precompute Texture" , ButtonSizes.Large)]
+        [GUIColor(0.8f,0.8f,0.2f)]
+        public void GenerateFFTPrecomputeTexture()
+        {
+            fft = new ATO_FastFourierTransform(renderResolution, fftShader);
+        
+            var tex2D = AT_OceanUtiliy.SaveTextureToDisk(
+                fft.PrecomputedData,
+                TempTexturePath,
+                FFTPrecomputeTextureName,
+                renderResolution
+                );
+
+#if UNITY_EDITOR
+            UnityEditor.EditorGUIUtility.PingObject(tex2D);
+#endif
         }
 
 
-        void InitialiseCascades()
-        {
-            if (waveCascade.Count < 3)
-                return;
 
+        public void CalculateBoundary( int level, out float boundaryIn, out float boundaryOut ) 
+        {
+            level = Mathf.Clamp(level, 0, cascadeLevel - 1);
+
+            boundaryIn = level == cascadeLevel - 1 ? 0.0001f : 2.0f * Mathf.PI / renderCascades[level].lengthScale * 12f;
+            boundaryOut = level == 0 ? 9999f : 2.0f * Mathf.PI / renderCascades[level - 1].lengthScale * 12f;
+
+        }
+
+
+        public void InitialiseCascades()
+        {
             //float boundary1 = 2 * Mathf.PI / lengthScale1 * 6f;
             //float boundary2 = 2 * Mathf.PI / lengthScale2 * 6f;
             //waveCascade[0].CalculateInitials(waveSettings, lengthScale0, 0.0001f, boundary1);
@@ -132,8 +201,11 @@ namespace ATOcean
                 //float boundaryIn = i == 0 ? 0.0001f: 2.0f * Mathf.PI / renderCascades[i].lengthScale * 6f;
                 //float boundaryOut = i == cascadeLevel - 1 ? 9999f : 2.0f * Mathf.PI / renderCascades[i+1].lengthScale * 6f;
 
-                float boundaryIn = i == cascadeLevel - 1 ? 0.0001f : 2.0f * Mathf.PI / renderCascades[i].lengthScale * 6f;
-                float boundaryOut = i == 0 ? 9999f : 2.0f * Mathf.PI / renderCascades[i + 1].lengthScale * 6f;
+                // float boundaryIn = i == cascadeLevel - 1 ? 0.0001f : 2.0f * Mathf.PI / renderCascades[i].lengthScale * 6f;
+                // float boundaryOut = i == 0 ? 9999f : 2.0f * Mathf.PI / renderCascades[i + 1].lengthScale * 6f;
+                float boundaryIn = 0;
+                float boundaryOut = 0;
+                CalculateBoundary(i, out boundaryIn, out boundaryOut);
 
                 waveCascade[i].CalculateInitials(waveSettings, renderCascades[i].lengthScale, boundaryIn, boundaryOut);
                 
@@ -141,40 +213,109 @@ namespace ATOcean
             }
         }
 
+        public void LinkMaterialWithCascade()
+        {
+            for (int i = 0; i < renderCascades.Count; i++)
+            {
+                for (int d = 0; d < waveCascade.Count; ++d)
+                {
+                    renderCascades[i].material.SetTexture("_Displacement_c" + d , waveCascade[d].Displacement);
+                    renderCascades[i].material.SetTexture("_Derivatives_c" + d , waveCascade[d].Derivatives);
+                    renderCascades[i].material.SetTexture("_Turbulence_c" + d , waveCascade[d].Turbulence);
+                }
+            }
+
+
+        }
+
+
 
         override public void InitRender()
         {
+            base.InitRender();
+
+            fft = new ATO_FastFourierTransform(renderResolution, fftShader);
+
             waveCascade = new List<ATO_FFTOceanCascade>();
-
-
             // var gaussianNoise = AT_OceanUtiliy.GetNoiseTexture(resolution);
-
             var gaussianNoise = noiseTexture;
 
             for (int i = 0; i < cascadeLevel; ++i)
             {
-                var lod = new ATO_FFTOceanCascade(
+                var cascade = new ATO_FFTOceanCascade(
                     renderResolution,
                     initialSpectrumShader,
                     timeDependentSpectrumShader,
                     texturesMergerShader,
+                    fft,
                     gaussianNoise
                     );
-                renderCascades[i].material = lod.InitMaterial(material,i);
-                waveCascade.Add(lod);
+                cascade.Init();
+                renderCascades[i].material = cascade.InitMaterial(material,i);
+                waveCascade.Add(cascade);
             }
 
-            base.InitRender();
+            InitialiseCascades();
+            LinkMaterialWithCascade();
+
         }
+
+
+        #region Visual
+
+        public override void InitVisual()
+        {
+            base.InitVisual();
+
+            if ( visual != null )
+            {
+                for ( int i = 0; i < waveCascade.Count; i++)
+                {
+                    visual.AddImageRef(
+                        waveCascade[i].Displacement,
+                        "Displacement",
+                        i,
+                        renderCascades[i].renderResolution
+                        );
+                    visual.AddImageRef(
+                        waveCascade[i].Derivatives,
+                        "Derivatives",
+                        i,
+                        renderCascades[i].renderResolution
+                        );
+                    visual.AddImageRef(
+                        waveCascade[i].Turbulence,
+                        "Turbulence",
+                        i,
+                        renderCascades[i].renderResolution
+                        );
+
+                }
+            }
+
+
+        }
+
+        #endregion Visual 
 
 
 
         #region Update
 
+        public override void UpdateRender(float t , float dt)
+        {
+            base.UpdateRender(t, dt);
+
+            for (int i = 0; i < cascadeLevel; ++i)
+            {
+                waveCascade[i].CalculateWavesAtTime(t);
+            }
 
 
+        }
 
-        #endregion
+
+        #endregion Update
 
     }
 

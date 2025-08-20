@@ -15,12 +15,12 @@ namespace ATOcean
         [InlineEditor]
         public AT_OceanWaveData waveData;
 
-        public override void EvaluateMesh(int i, int j, float t)
+        public override void EvaluateMesh(int i, int j, float t , float dt )
         {
-            // 当前顶点的索引
-            var currentIndex = i * resolution + j;
+            // get the index of current vertex
+            var currentIndex = GetCurrentIndex(i, j);
 
-            // 获取顶点初始坐标
+            // get the vertex position 
             var vertex = vertices[currentIndex];
 
             float h = 0;

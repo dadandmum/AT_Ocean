@@ -181,7 +181,7 @@ Material:
     - _SubSurfaceSun: 0.5
     - _SubSurfaceSunFallOff: 3
     - _Surface: 0
-    - _TessellationFactor: 30
+    - _TessellationFactor: 20
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:

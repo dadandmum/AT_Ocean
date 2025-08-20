@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8803915cab3e60f45be8bda9d85bd00c, type: 3}
+  m_Name: WaveData_Gerstner_LOD1_310
+  m_EditorClassIdentifier: 
+  waveCount: 5
+  amplitudeRand: 0.1
+  wavelengthRand: 2
+  phaseRand: 3
+  steepnessRand: 0.5
+  randomness: 0.5
+  useWaveLengthFactor: 1
+  waveLengthFactor: 0.8
+  useAmplitudeFactor: 1
+  amplitudeFactor: 0.8
+  usePhaseFactor: 1
+  phaseFactor: 0.8
+  waves:
+  - direction: {x: -0.9998463, y: 0, z: -0.017533328}
+    amplitude: 0.07600291
+    wavelength: 1.3505337
+    phaseFrequency: 2.3144124
+    steepness: 0.76045376
+  - direction: {x: -0.6675659, y: 0, z: 0.7445507}
+    amplitude: 0.045976665
+    wavelength: 1.4785526
+    phaseFrequency: 1.5858679
+    steepness: 1.4084316
+  - direction: {x: 0.73096246, y: 0, z: -0.6824177}
+    amplitude: 0.05473585
+    wavelength: 0.71955353
+    phaseFrequency: 1.4795994
+    steepness: 0.58046
+  - direction: {x: 0.8871383, y: 0, z: 0.46150377}
+    amplitude: 0.03677578
+    wavelength: 0.91546905
+    phaseFrequency: 0.87429523
+    steepness: 1.1027244
+  - direction: {x: -0.894737, y: 0, z: -0.4465935}
+    amplitude: 0.022473598
+    wavelength: 0.54225725
+    phaseFrequency: 0.961104
+    steepness: 1.4027932

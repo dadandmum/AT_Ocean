@@ -12,6 +12,8 @@ namespace ATOcean
         [BoxGroup("AT_Ocean")]
         [BoxGroup("AT_Ocean/Gerstner")]
         [InlineEditor]
+        [InfoBox("【重要】Gerstner波参数，用于定义每一道波的各项参数，点击SetupWaves可以根据参数随机生成各种波")]
+
         public List<AT_OceanWaveData> waveData;
 
         [BoxGroup("AT_Ocean/Gerstner")]
@@ -21,19 +23,13 @@ namespace ATOcean
 
         [BoxGroup("AT_Ocean/Gerstner")]
         [SerializeField]
+        [Tooltip("Gerstner波计算用的Compute Shader")]
+
         ComputeShader gerstnerWaveShader;
 
 
-        [BoxGroup("AT_Ocean/Gerstner")]
-        [ReadOnly]
-        public float timer;
 
 
-        [BoxGroup("AT_Ocean/Debug")]
-        public bool visualizeRT;
-
-        [BoxGroup("AT_Ocean/Visual")]
-        public ATO_Visual visual;
 
 
         #region Function
@@ -48,7 +44,7 @@ namespace ATOcean
 
             for (int i = 0; i < renderCascades.Count; i++)
             {
-                waveData.Add(AT_OceanUtiliy.GernateWaveData());
+                waveData.Add(AT_OceanUtiliy.GernateWaveData( "Gerstner_LOD" + i + "_" ));
             }
             // waveData = AT_OceanUtiliy.GernateWaveData();
         }
@@ -214,6 +210,7 @@ namespace ATOcean
             for (int i = 0; i < waveCascade.Count; i++)
             {
                 waveCascade[i].Init();
+
             }
         }
 
@@ -231,44 +228,65 @@ namespace ATOcean
 
         #endregion
 
-        #region Visual 
 
 
-        public void UpdateVisual()
+        #region Render
+
+
+        public override void InitRender()
         {
-            if (visual == null)
-            {
-                visual = transform.GetComponentInChildren<ATO_Visual>();
-            }
-            if (visual != null)
-            {
-                if (Input.GetKeyDown(KeyCode.G))
-                {
-                    visualizeRT  = !visualizeRT;
-                }
+            base.InitRender();
 
+            CreateCascades();
 
-                if (visualizeRT)
-                {
-                    visual.Show();
-                }
-                else
-                {
-                    visual.Hide();
-                }
+            InitCascades();
+
+            LinkTextures();
+        }
+
+        public override void Dipose()
+        {
+            base.Dipose();
+
+            if (waveCascade != null)
+            {
+                waveCascade.ForEach(x => x.Dispose());
+                waveCascade.Clear();
             }
 
         }
 
-        public void InitVisual()
+
+        public override void UpdateRender(float t , float dt)
         {
-            if (visual == null)
+            base.UpdateRender(t, dt);
+
+            if ( waveCascade == null || waveCascade.Count == 0)
             {
-                visual = transform.GetComponentInChildren<ATO_Visual>();
+                CreateCascades();
+                InitCascades();
             }
-            if (visual != null)
+
+            for (int i = 0; i < waveCascade.Count; i++)
             {
-                CleanVisual();
+                waveCascade[i].Run(t);
+            }
+
+            // LinkTextures();
+        }
+
+        #endregion
+
+
+        #region  Visual 
+
+        public override void InitVisual()
+        {
+            base.InitVisual();
+
+            if ( visual != null )
+            {
+                
 
                 for ( int i = 0; i < renderCascades.Count; i++)
                 {
@@ -285,76 +303,11 @@ namespace ATOcean
                         renderCascades[i].renderResolution
                         );
                 }
-
             }
-
-            }
-
-        public void CleanVisual()
-        {
-            if (visual == null)
-            {
-                visual = transform.GetComponentInChildren<ATO_Visual>();
-            }
-            if (visual != null)
-                visual.Clear();
-
-        }
-        #endregion
-
-
-        #region Render
-
-
-        public override void InitRender()
-        {
-            base.InitRender();
-
-            CreateCascades();
-
-            InitCascades();
-
-            LinkTextures();
-
-            InitVisual();
-        }
-
-        public override void Dipose()
-        {
-            base.Dipose();
-
-            if (waveCascade != null)
-            {
-                waveCascade.ForEach(x => x.Dispose());
-                waveCascade.Clear();
-            }
-
-            CleanVisual();
         }
 
 
-        public override void UpdateRender()
-        {
-            base.UpdateRender();
-
-            if ( waveCascade == null || waveCascade.Count == 0)
-            {
-                CreateCascades();
-                InitCascades();
-            }
-
-            timer += Time.deltaTime;
-            for (int i = 0; i < waveCascade.Count; i++)
-            {
-                waveCascade[i].Run(timer);
-            }
-
-            // LinkTextures();
-
-            UpdateVisual();
-        }
-
-        #endregion
+        #endregion Visual 
 
         public static int DISPLACEMENT_0_PROP = Shader.PropertyToID("_Displacement_c0");
         public static int DISPLACEMENT_1_PROP = Shader.PropertyToID("_Displacement_c1");

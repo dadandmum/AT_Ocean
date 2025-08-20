@@ -25,6 +25,13 @@ namespace ATOcean
 
 
 
+        private RenderTexture DxDz;
+        private RenderTexture DyDxz;
+        private RenderTexture DyxDyz;
+        private RenderTexture DxxDzz;
+
+        private ATO_FastFourierTransform fft;
+
         private RenderTexture buffer;
 
         // Kernel IDs:
@@ -34,8 +41,11 @@ namespace ATOcean
         int KERNEL_RESULT_TEXTURES;
 
         private RenderTexture displacement;
+        public RenderTexture Displacement { get { return displacement; } }
         private RenderTexture derivatives;
+        public RenderTexture Derivatives { get { return derivatives; } }
         private RenderTexture turbulence;
+        public RenderTexture Turbulence { get { return turbulence; } }
 
 
         float lambda;
@@ -44,6 +54,8 @@ namespace ATOcean
                         ComputeShader initialSpectrumShader,
                         ComputeShader timeDependentSpectrumShader,
                         ComputeShader texturesMergerShader,
+                        ATO_FastFourierTransform fft,
+
                         Texture2D gaussianNoise
             )
         {
@@ -52,7 +64,7 @@ namespace ATOcean
             this.gaussianNoise = gaussianNoise;
             this.timeDependentSpectrumShader = timeDependentSpectrumShader;
             this.texturesMergerShader = texturesMergerShader;
-
+            this.fft = fft;
         }
 
 
@@ -76,10 +88,17 @@ namespace ATOcean
 
             this.initialSpectrum = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.ARGBFloat);
             this.precomputedData = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.ARGBFloat);
+            this.displacement = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.ARGBFloat);
+            this.derivatives = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.ARGBFloat, true);
+            this.turbulence = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.ARGBFloat, true);
 
             this.paramsBuffer = new ComputeBuffer(2, 8 * sizeof(float));
 
-            this.buffer = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.ARGBFloat);
+            this.buffer = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.RGFloat);
+            this.DxDz = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.RGFloat);
+            this.DyDxz = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.RGFloat);
+            this.DyxDyz = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.RGFloat);
+            this.DxxDzz = AT_OceanUtiliy.CreateRenderTexture(resolution, RenderTextureFormat.RGFloat);
 
         }
 
@@ -110,12 +129,12 @@ namespace ATOcean
 
             // calculate H0K and  WavesData
             // H0K is the real and image of H0
-            // WavesData is (kx, 1 / kLength, ky , omega)
             initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, H0K_PROP, buffer);
             initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, PRECOMPUTED_DATA_PROP, precomputedData);
             initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, NOISE_PROP, gaussianNoise);
             initialSpectrumShader.Dispatch(KERNEL_INITIAL_SPECTRUM, resolution / LOCAL_WORK_GROUPS_X, resolution / LOCAL_WORK_GROUPS_Y, 1);
 
+            // WavesData is (kx, 1 / kLength, ky , omega)
             initialSpectrumShader.SetTexture(KERNEL_CONJUGATE_SPECTRUM, H0_PROP, initialSpectrum);
             initialSpectrumShader.SetTexture(KERNEL_CONJUGATE_SPECTRUM, H0K_PROP, buffer);
             initialSpectrumShader.Dispatch(KERNEL_CONJUGATE_SPECTRUM, resolution / LOCAL_WORK_GROUPS_X, resolution / LOCAL_WORK_GROUPS_Y, 1);
@@ -123,6 +142,45 @@ namespace ATOcean
             this.paramsBuffer?.Release();
 
         }
+
+        public void CalculateWavesAtTime(float time)
+        {
+            // Calculating complex amplitudes
+            timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, Dx_Dz_PROP, DxDz);
+            timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, Dy_Dxz_PROP, DyDxz);
+            timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, Dyx_Dyz_PROP, DyxDyz);
+            timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, Dxx_Dzz_PROP, DxxDzz);
+            timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, H0_PROP, initialSpectrum);
+            timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, PRECOMPUTED_DATA_PROP, precomputedData);
+            timeDependentSpectrumShader.SetFloat(TIME_PROP, time);
+            timeDependentSpectrumShader.Dispatch(KERNEL_TIME_DEPENDENT_SPECTRUMS, resolution / LOCAL_WORK_GROUPS_X, resolution / LOCAL_WORK_GROUPS_Y, 1);
+
+            // Calculating IFFTs of complex amplitudes
+            fft.IFFT2D(DxDz, buffer, true, false, true);
+            fft.IFFT2D(DyDxz, buffer, true, false, true);
+            fft.IFFT2D(DyxDyz, buffer, true, false, true);
+            fft.IFFT2D(DxxDzz, buffer, true, false, true);
+
+
+            // Filling displacement and normals textures
+            texturesMergerShader.SetFloat("DeltaTime", Time.deltaTime);
+
+            texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, Dx_Dz_PROP, DxDz);
+            texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, Dy_Dxz_PROP, DyDxz);
+            texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, Dyx_Dyz_PROP, DyxDyz);
+            texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, Dxx_Dzz_PROP, DxxDzz);
+            texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, DISPLACEMENT_PROP, displacement);
+            texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, DERIVATIVES_PROP, derivatives);
+            texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, TURBULENCE_PROP, turbulence);
+            texturesMergerShader.SetFloat(LAMBDA_PROP, lambda);
+            texturesMergerShader.Dispatch(KERNEL_RESULT_TEXTURES, resolution / LOCAL_WORK_GROUPS_X, resolution / LOCAL_WORK_GROUPS_Y, 1);
+
+            derivatives.GenerateMips();
+            turbulence.GenerateMips();
+
+        }
+
+
 
         public Material material;
 
@@ -143,7 +201,7 @@ namespace ATOcean
 
 
         public void CalculateInitials(AT_OceanFFTData wavesSettings, float lengthScale,
-                                      float cutoffLow, float cutoffHigh)
+                                      float cutoffLow, float cutoffHigh )
         {
             lambda = wavesSettings.lambda;
 
@@ -168,10 +226,6 @@ namespace ATOcean
         }
 
 
-
-
-
-
         // Property IDs
         public static int RESOLUTION = Shader.PropertyToID("Resolution");
         public static int LENGTH_SCALE_PROP = Shader.PropertyToID("LengthScale");
@@ -185,6 +239,17 @@ namespace ATOcean
         readonly int PRECOMPUTED_DATA_PROP = Shader.PropertyToID("WavesData");
         readonly int TIME_PROP = Shader.PropertyToID("Time");
 
+        readonly int Dx_Dz_PROP = Shader.PropertyToID("Dx_Dz");
+        readonly int Dy_Dxz_PROP = Shader.PropertyToID("Dy_Dxz");
+        readonly int Dyx_Dyz_PROP = Shader.PropertyToID("Dyx_Dyz");
+        readonly int Dxx_Dzz_PROP = Shader.PropertyToID("Dxx_Dzz");
+        readonly int LAMBDA_PROP = Shader.PropertyToID("Lambda");
+
+
+        readonly int DISPLACEMENT_PROP = Shader.PropertyToID("Displacement");
+        readonly int DERIVATIVES_PROP = Shader.PropertyToID("Derivatives");
+        readonly int TURBULENCE_PROP = Shader.PropertyToID("Turbulence"); 
+    
     }
 
 }

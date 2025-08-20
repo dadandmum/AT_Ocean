@@ -2,6 +2,7 @@ using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace ATOcean
 {
@@ -35,7 +36,6 @@ namespace ATOcean
         [InfoBox("The total level of mesh")]
         public int clipLevels = 8;
 
-
         [BoxGroup("AT_Ocean/Mesh")]
         [Title("Real Time Variables")]
         [ReadOnly]
@@ -44,7 +44,6 @@ namespace ATOcean
         [BoxGroup("AT_Ocean/Mesh")]
         [ReadOnly]
         public SubMeshRef centerMesh;
-
 
         [System.Serializable]
         public class SubMeshRef
@@ -65,8 +64,8 @@ namespace ATOcean
 
             }
 
-            // Ïú»Ù
-            public void Destroy()
+            // é”€æ¯
+             public void Destroy()
             {
                 if (gameObject != null)
                 {
@@ -93,13 +92,26 @@ namespace ATOcean
         [BoxGroup("AT_Ocean/Render")]
         public Material material;
 
+        [BoxGroup("AT_Ocean/Render")]
+        [ReadOnly]
+        public float timer;
+
+
+        [BoxGroup("AT_Ocean/Debug")]
+        public bool visualizeRT;
+
+        [BoxGroup("AT_Ocean/Visual")]
+        [InfoBox("Gerstneræ³¢å¯è§†åŒ–ï¼Œç”¨äºè°ƒè¯•")]
+
+        public ATO_Visual visual;
+
 
         [BoxGroup("AT_Ocean/Debug",Order = 1000)]
         public bool syncMaterial;
         [BoxGroup("AT_Ocean/Debug")]
         public bool showLODs;
         [BoxGroup("AT_Ocean/Debug")]
-        public bool playInEditor=true;
+        public bool simulateInEditor=true;
 
         public void ValidateRes()
         {
@@ -119,6 +131,8 @@ namespace ATOcean
             InitBasicCascadesDefinition();
 
             InitRender();
+
+            InitVisual();
         }
 
         public void OnEnable()
@@ -129,7 +143,10 @@ namespace ATOcean
             {
                 InitBasicCascadesDefinition();
             }
+
             InitRender();
+
+            InitVisual();
         }
 
         public void OnDisable()
@@ -137,18 +154,24 @@ namespace ATOcean
             Dipose();
         }
 
-
         public void Update()
         {
-            if ( playInEditor || Application.isPlaying)
-                UpdateRender();
+            if (simulateInEditor || Application.isPlaying)
+            {
+                timer += Time.deltaTime;
+                UpdateRender(timer, Time.deltaTime);
+                
+                UpdateVisual();
+            }
         }
 
         virtual public void Dipose()
         {
+            CleanVisual();
 
         }
 
+        
 
         #region Render 
         public int ClipLevelToCascadesLevel(int _clipLevel)
@@ -188,9 +211,8 @@ namespace ATOcean
 
             AssignMehsMaterialByCascadeLevel();
 
-
+            Debug.Log("Finish Init Render cascades Count : " + renderCascades.Count);
         }
-
 
         public void AssignMehsMaterialByCascadeLevel()
         {
@@ -242,8 +264,6 @@ namespace ATOcean
                 renderCascades.Add(rc);
 
             }
-
-            InitRender();
         }
 
         public void SetupMaterailLODKeys()
@@ -270,24 +290,24 @@ namespace ATOcean
 
 
 
-        // ³£ÓÃÑÕÉ«³£Á¿Êı×é
+        // å¸¸ç”¨é¢œè‰²å¸¸é‡æ•°ç»„
         UnityEngine.Color[] commonColors = new UnityEngine.Color[]
         {
-                UnityEngine.Color.red,        // ºìÉ«
-                UnityEngine.Color.green,      // ÂÌÉ«
-                UnityEngine.Color.blue,       // À¶É«
-                UnityEngine.Color.white,      // °×É«
-                UnityEngine.Color.black,      // ºÚÉ«
-                UnityEngine.Color.yellow,     // »ÆÉ«
-                UnityEngine.Color.cyan,       // ÇàÉ«
-                UnityEngine.Color.magenta,    // ÑóºìÉ«
-                UnityEngine.Color.gray,       // »ÒÉ« (0.5, 0.5, 0.5)
-                UnityEngine.Color.grey,       // »ÒÉ«£¨Ó¢Ê½Æ´Ğ´£¬Í¬ gray£©
-                UnityEngine.Color.clear,      // Í¸Ã÷É« (0,0,0,0)
+                UnityEngine.Color.red,        // çº¢è‰²
+                UnityEngine.Color.green,      // ç»¿è‰²
+                UnityEngine.Color.blue,       // è“è‰²
+                UnityEngine.Color.white,      // ç™½è‰²
+                UnityEngine.Color.black,      // é»‘è‰²
+                UnityEngine.Color.yellow,     // é»„è‰²
+                UnityEngine.Color.cyan,       // é’è‰²
+                UnityEngine.Color.magenta,    // æ´‹çº¢è‰²
+                UnityEngine.Color.gray,       // ç°è‰² (0.5, 0.5, 0.5)
+                UnityEngine.Color.grey,       // ç°è‰²ï¼ˆè‹±å¼æ‹¼å†™ï¼ŒåŒ grayï¼‰
+                UnityEngine.Color.clear,      // é€æ˜è‰² (0,0,0,0)
         };
 
 
-        virtual public void UpdateRender()
+        virtual public void UpdateRender(float t , float dt)
         {
             if ( syncMaterial)
             {
@@ -356,30 +376,46 @@ namespace ATOcean
         }
         
 
+        /// <summary>
+        /// åˆ›å»ºä¸€ä¸ªå­ç½‘æ ¼å¼•ç”¨å¯¹è±¡ï¼ŒåŒ…å«ä¸€ä¸ªæ–°çš„æ¸¸æˆå¯¹è±¡åŠå…¶ç›¸å…³ç»„ä»¶
+        /// </summary>
+        /// <param name="name">æ–°æ¸¸æˆå¯¹è±¡çš„åç§°</param>
+        /// <param name="lod">è¯¥å­ç½‘æ ¼çš„LODçº§åˆ«</param>
+        /// <param name="mesh">è¦èµ‹å€¼ç»™ç½‘æ ¼è¿‡æ»¤å™¨çš„ç½‘æ ¼æ•°æ®</param>
+        /// <param name="material">è¦ä½¿ç”¨çš„æè´¨ï¼ˆå½“å‰æ–¹æ³•æœªä½¿ç”¨ï¼Œå¯åç»­æ‰©å±•ï¼‰</param>
+        /// <returns>è¿”å›ä¸€ä¸ªåŒ…å«æ–°åˆ›å»ºæ¸¸æˆå¯¹è±¡åŠå…¶ç»„ä»¶çš„å­ç½‘æ ¼å¼•ç”¨å¯¹è±¡</returns>
         public SubMeshRef CreateSubMesh( string name , int lod , Mesh mesh , Material material )
         { 
+            // åˆ›å»ºä¸€ä¸ªæ–°çš„æ¸¸æˆå¯¹è±¡
             var go = new GameObject();
+            // è®¾ç½®æ¸¸æˆå¯¹è±¡çš„åç§°
             go.name = name;
+            // å°†æ–°æ¸¸æˆå¯¹è±¡è®¾ç½®ä¸ºå½“å‰å¯¹è±¡çš„å­å¯¹è±¡
             go.transform.SetParent(transform);
+            // å°†æ–°æ¸¸æˆå¯¹è±¡çš„æœ¬åœ°ä½ç½®è®¾ç½®ä¸ºåŸç‚¹
             go.transform.localPosition = new Vector3(0, 0, 0);
 
+            // ä¸ºæ¸¸æˆå¯¹è±¡æ·»åŠ ç½‘æ ¼è¿‡æ»¤å™¨ç»„ä»¶
             var filter = go.AddComponent<MeshFilter>();
+            // å°†ä¼ å…¥çš„ç½‘æ ¼æ•°æ®èµ‹å€¼ç»™ç½‘æ ¼è¿‡æ»¤å™¨
             filter.mesh = mesh;
+            // ä¸ºæ¸¸æˆå¯¹è±¡æ·»åŠ ç½‘æ ¼æ¸²æŸ“å™¨ç»„ä»¶
             var renderer = go.AddComponent<MeshRenderer>();
 
+            // åˆ›å»ºå¹¶è¿”å›ä¸€ä¸ªæ–°çš„å­ç½‘æ ¼å¼•ç”¨å¯¹è±¡
             return new SubMeshRef(lod , mesh, filter, go, renderer);
 
         }
 
         /// <summary>
-        /// ´´½¨Ò»¸ö»·×´µÄÍø¸ñ¡£
-        /// ÕûÌå´óĞ¡Îª (resolution  * unitScale) * (resolution  * unitScale)¡£
-        /// ÖĞĞÄÓĞÒ»¸ö´óĞ¡Îª (resolution * unitScale) * (resolution * unitScale) µÄ¿Õ¶´¡£
-        /// Ê¹ÓÃ CombineMeshes ¼¼ÊõÆ´½ÓËÄ¸ö¾ØĞÎÌõ´øÊµÏÖ¡£
+        /// åˆ›å»ºä¸€ä¸ªç¯çŠ¶çš„ç½‘æ ¼ã€‚
+        /// æ•´ä½“å¤§å°ä¸º (resolution  * unitScale) * (resolution  * unitScale)ã€‚
+        /// ä¸­å¿ƒæœ‰ä¸€ä¸ªå¤§å°ä¸º (resolution * unitScale) * (resolution * unitScale) çš„ç©ºæ´ã€‚
+        /// ä½¿ç”¨ CombineMeshes æŠ€æœ¯æ‹¼æ¥å››ä¸ªçŸ©å½¢æ¡å¸¦å®ç°ã€‚
         /// </summary>
-        /// <param name="resolution">Íø¸ñÃ¿±ßµÄµãÊı£¨ÓÃÓÚ¼ÆËãÕûÌåºÍ¿Õ¶´³ß´ç£©</param>
-        /// <param name="unitScale">Íø¸ñµÄ»ù±¾µ¥Î»³¤¶È</param>
-        /// <returns>×éºÏºóµÄ»·×´Íø¸ñ</returns>
+        /// <param name="resolution">ç½‘æ ¼æ¯è¾¹çš„ç‚¹æ•°ï¼ˆç”¨äºè®¡ç®—æ•´ä½“å’Œç©ºæ´å°ºå¯¸ï¼‰</param>
+        /// <param name="unitScale">ç½‘æ ¼çš„åŸºæœ¬å•ä½é•¿åº¦</param>
+        /// <returns>ç»„åˆåçš„ç¯çŠ¶ç½‘æ ¼</returns>
         Mesh CreateRingMesh(int resolution, float unitScale)
         {
             if ( resolution % 4 != 0 )
@@ -387,30 +423,30 @@ namespace ATOcean
                 Debug.LogError("Resolution of Ring Mesh should be power of 4 , now is " + resolution);
                 return null;
             }
-            // 1. ¼ÆËã¹Ø¼ü³ß´ç
+            // 1. è®¡ç®—å…³é”®å°ºå¯¸
             int totalRes = resolution;
             int holeRes = resolution / 2 ;
             int stripRes = (totalRes - holeRes) / 2;
-            float totalSize = totalRes * unitScale; // Õû¸ö¿ò¼ÜµÄÍâ±ß³¤
-            float holeSize = holeRes * unitScale;      // ÖĞĞÄ¿Õ¶´µÄ±ß³¤
-            float stripWidth = stripRes * unitScale; // Ã¿¸öÌõ´øµÄ¿í¶È (Íâ¿òµ½¿Õ¶´µÄ¾àÀë)
+            float totalSize = totalRes * unitScale; // æ•´ä¸ªæ¡†æ¶çš„å¤–è¾¹é•¿
+            float holeSize = holeRes * unitScale;      // ä¸­å¿ƒç©ºæ´çš„è¾¹é•¿
+            float stripWidth = stripRes * unitScale; // æ¯ä¸ªæ¡å¸¦çš„å®½åº¦ (å¤–æ¡†åˆ°ç©ºæ´çš„è·ç¦»)
             float offset = 0.05f;
 
 
             //Debug.Log($"CreateFrameMesh: resolution={resolution}, unitScale={unitScale}");
             //Debug.Log($"  Total Size: {totalSize}, Hole Size: {holeSize}, Strip Width: {stripWidth}");
 
-            // 2. ´´½¨ CombineInstance ÁĞ±íÀ´´æ´¢ÒªºÏ²¢µÄÍø¸ñ
+            // 2. åˆ›å»º CombineInstance åˆ—è¡¨æ¥å­˜å‚¨è¦åˆå¹¶çš„ç½‘æ ¼
             List<CombineInstance> combineInstances = new List<CombineInstance>();
 
-            // 3. ´´½¨²¢¶¨Î»ËÄ¸öÌõ´ø (Top, Bottom, Left, Right)
+            // 3. åˆ›å»ºå¹¶å®šä½å››ä¸ªæ¡å¸¦ (Top, Bottom, Left, Right)
 
-            // 3.1 ¶¥²¿Ìõ´ø (Top Strip)
-            // ³ß´ç: ¿í¶È = totalSize, ¸ß¶È = stripWidth
+            // 3.1 é¡¶éƒ¨æ¡å¸¦ (Top Strip)
+            // å°ºå¯¸: å®½åº¦ = totalSize, é«˜åº¦ = stripWidth
             Mesh topMesh = CreatePlaneMesh(totalRes, stripRes, unitScale);
             CombineInstance topInstance = new CombineInstance();
             topInstance.mesh = topMesh;
-            // Î»ÖÃ: Y=0, X=0, Z= ´Ó¿Õ¶´¶¥²¿±ßÔµµ½¿ò¼Ü¶¥²¿±ßÔµµÄÖĞĞÄ
+            // ä½ç½®: Y=0, X=0, Z= ä»ç©ºæ´é¡¶éƒ¨è¾¹ç¼˜åˆ°æ¡†æ¶é¡¶éƒ¨è¾¹ç¼˜çš„ä¸­å¿ƒ
             topInstance.transform = Matrix4x4.TRS(
                 new Vector3(0, 0, (holeSize / 2) + (stripWidth / 2)),
                 Quaternion.identity,
@@ -418,12 +454,12 @@ namespace ATOcean
             );
             combineInstances.Add(topInstance);
 
-            // 3.2 µ×²¿Ìõ´ø (Bottom Strip)
-            // ³ß´ç: ¿í¶È = totalSize, ¸ß¶È = stripWidth
+            // 3.2 åº•éƒ¨æ¡å¸¦ (Bottom Strip)
+            // å°ºå¯¸: å®½åº¦ = totalSize, é«˜åº¦ = stripWidth
             Mesh bottomMesh = CreatePlaneMesh(totalRes, stripRes, unitScale);
             CombineInstance bottomInstance = new CombineInstance();
             bottomInstance.mesh = bottomMesh;
-            // Î»ÖÃ: Y=0, X=0, Z= ´Ó¿ò¼Üµ×²¿±ßÔµµ½¿Õ¶´µ×²¿±ßÔµµÄÖĞĞÄ (¸º·½Ïò)
+            // ä½ç½®: Y=0, X=0, Z= ä»æ¡†æ¶åº•éƒ¨è¾¹ç¼˜åˆ°ç©ºæ´åº•éƒ¨è¾¹ç¼˜çš„ä¸­å¿ƒ (è´Ÿæ–¹å‘)
             bottomInstance.transform = Matrix4x4.TRS(
                 new Vector3(0, 0, -(holeSize / 2) - (stripWidth / 2)),
                 Quaternion.identity,
@@ -431,14 +467,14 @@ namespace ATOcean
             );
             combineInstances.Add(bottomInstance);
 
-            // 3.3 ×ó²àÌõ´ø (Left Strip)
-            // ³ß´ç: ¿í¶È = stripWidth, ¸ß¶È = holeSize (ÒòÎªÖĞ¼ä¿Õ¶´¸ß¶ÈÊÇ holeSize)
+            // 3.3 å·¦ä¾§æ¡å¸¦ (Left Strip)
+            // å°ºå¯¸: å®½åº¦ = stripWidth, é«˜åº¦ = holeSize (å› ä¸ºä¸­é—´ç©ºæ´é«˜åº¦æ˜¯ holeSize)
             Mesh leftMesh = CreatePlaneMesh(stripRes, holeRes,unitScale);
             CombineInstance leftInstance = new CombineInstance();
             leftInstance.mesh = leftMesh;
-            // Î»ÖÃ: Y=0, X= ´Ó¿ò¼Ü×ó²à±ßÔµµ½¿Õ¶´×ó²à±ßÔµµÄÖĞĞÄ (¸º·½Ïò), Z=0
-            // ×¢Òâ: CreatePlaneMesh Ä¬ÈÏÔÚXZÆ½Ãæ£¬ËùÒÔÖ±½ÓÓÃ stripWidth ´´½¨µÄÍø¸ñ¿í¸ß¶¼ÊÇ stripWidth¡£
-            // ÎÒÃÇĞèÒªÔÚZ·½ÏòÉÏÀ­ÉìËüµ½ holeSize µÄ³¤¶È¡£ÕâÍ¨¹ıËõ·Å transform ÊµÏÖ¡£
+            // ä½ç½®: Y=0, X= ä»æ¡†æ¶å·¦ä¾§è¾¹ç¼˜åˆ°ç©ºæ´å·¦ä¾§è¾¹ç¼˜çš„ä¸­å¿ƒ (è´Ÿæ–¹å‘), Z=0
+            // æ³¨æ„: CreatePlaneMesh é»˜è®¤åœ¨XZå¹³é¢ï¼Œæ‰€ä»¥ç›´æ¥ç”¨ stripWidth åˆ›å»ºçš„ç½‘æ ¼å®½é«˜éƒ½æ˜¯ stripWidthã€‚
+            // æˆ‘ä»¬éœ€è¦åœ¨Zæ–¹å‘ä¸Šæ‹‰ä¼¸å®ƒåˆ° holeSize çš„é•¿åº¦ã€‚è¿™é€šè¿‡ç¼©æ”¾ transform å®ç°ã€‚
             leftInstance.transform = Matrix4x4.TRS(
                 new Vector3(-(holeSize / 2) - (stripWidth / 2), 0, 0),
                 Quaternion.identity,
@@ -446,12 +482,12 @@ namespace ATOcean
             );
             combineInstances.Add(leftInstance);
 
-            // 3.4 ÓÒ²àÌõ´ø (Right Strip)
-            // ³ß´ç: ¿í¶È = stripWidth, ¸ß¶È = holeSize
+            // 3.4 å³ä¾§æ¡å¸¦ (Right Strip)
+            // å°ºå¯¸: å®½åº¦ = stripWidth, é«˜åº¦ = holeSize
             Mesh rightMesh = CreatePlaneMesh(stripRes, holeRes, unitScale);
             CombineInstance rightInstance = new CombineInstance();
             rightInstance.mesh = rightMesh;
-            // Î»ÖÃ: Y=0, X= ´Ó¿Õ¶´ÓÒ²à±ßÔµµ½¿ò¼ÜÓÒ²à±ßÔµµÄÖĞĞÄ, Z=0
+            // ä½ç½®: Y=0, X= ä»ç©ºæ´å³ä¾§è¾¹ç¼˜åˆ°æ¡†æ¶å³ä¾§è¾¹ç¼˜çš„ä¸­å¿ƒ, Z=0
             rightInstance.transform = Matrix4x4.TRS(
                 new Vector3((holeSize / 2) + (stripWidth / 2), 0, 0),
                 Quaternion.identity,
@@ -459,44 +495,57 @@ namespace ATOcean
             );
             combineInstances.Add(rightInstance);
 
-            // 4. ´´½¨×îÖÕµÄ×éºÏÍø¸ñ
+            // 4. åˆ›å»ºæœ€ç»ˆçš„ç»„åˆç½‘æ ¼
             Mesh combinedMesh = new Mesh();
-            // Ê¹ÓÃ combineInstances ¹¹Ôì×îÖÕÍø¸ñ
-            // µÚ¶ş¸ö²ÎÊı 'true' ±íÊ¾ÎÒÃÇÏ£ÍûºÏ²¢ºóµÄÍø¸ñ¹²Ïí²ÄÖÊ£¨ÕâÀïÖ»ÓĞÒ»¸öÍø¸ñ£¬ËùÒÔÎŞËùÎ½£©
-            // µÚÈı¸ö²ÎÊı 'true' ±íÊ¾ÎÒÃÇÏ£ÍûºÏ²¢Ê±¿¼ÂÇ±ä»»¾ØÕó£¨Î»ÖÃ¡¢Ğı×ª¡¢Ëõ·Å£©
+            // ä½¿ç”¨ combineInstances æ„é€ æœ€ç»ˆç½‘æ ¼
+            // ç¬¬äºŒä¸ªå‚æ•° 'true' è¡¨ç¤ºæˆ‘ä»¬å¸Œæœ›åˆå¹¶åçš„ç½‘æ ¼å…±äº«æè´¨ï¼ˆè¿™é‡Œåªæœ‰ä¸€ä¸ªç½‘æ ¼ï¼Œæ‰€ä»¥æ— æ‰€è°“ï¼‰
+            // ç¬¬ä¸‰ä¸ªå‚æ•° 'true' è¡¨ç¤ºæˆ‘ä»¬å¸Œæœ›åˆå¹¶æ—¶è€ƒè™‘å˜æ¢çŸ©é˜µï¼ˆä½ç½®ã€æ—‹è½¬ã€ç¼©æ”¾ï¼‰
             combinedMesh.CombineMeshes(combineInstances.ToArray(), true, true);
 
-            // 5. ÇåÀíÁÙÊ±´´½¨µÄÍø¸ñÒÔ±ÜÃâÄÚ´æĞ¹Â©
-            // ×¢Òâ: ÔÚ Unity ÖĞ£¬Mesh ×ÊÔ´ĞèÒªÊÖ¶¯Ïú»Ù£¬ÓÈÆäÊÇÔÚ±à¼­Æ÷ÖĞÆµ·±µ÷ÓÃÊ±¡£
-            // ÔÚÔËĞĞÊ±£¬Èç¹ûÕâĞ©Íø¸ñÃ»ÓĞ±»ÆäËûµØ·½ÒıÓÃ£¬GC »á´¦Àí£¬µ«ÏÔÊ½Ïú»Ù¸ü°²È«¡£
-            // **ÖØÒª**: Ö»ÓĞÔÚÈ·ÈÏ CombineMeshes ÒÑ¾­¸´ÖÆÁË¶¥µãÊı¾İºó²ÅÄÜÏú»Ù¡£
-            // CombineMeshes Í¨³£»á¸´ÖÆÊı¾İ£¬ËùÒÔ¿ÉÒÔ°²È«Ïú»ÙÔ´Íø¸ñ¡£
+            // 5. æ¸…ç†ä¸´æ—¶åˆ›å»ºçš„ç½‘æ ¼ä»¥é¿å…å†…å­˜æ³„æ¼
+            // æ³¨æ„: åœ¨ Unity ä¸­ï¼ŒMesh èµ„æºéœ€è¦æ‰‹åŠ¨é”€æ¯ï¼Œå°¤å…¶æ˜¯åœ¨ç¼–è¾‘å™¨ä¸­é¢‘ç¹è°ƒç”¨æ—¶ã€‚
+            // åœ¨è¿è¡Œæ—¶ï¼Œå¦‚æœè¿™äº›ç½‘æ ¼æ²¡æœ‰è¢«å…¶ä»–åœ°æ–¹å¼•ç”¨ï¼ŒGC ä¼šå¤„ç†ï¼Œä½†æ˜¾å¼é”€æ¯æ›´å®‰å…¨ã€‚
+            // **é‡è¦**: åªæœ‰åœ¨ç¡®è®¤ CombineMeshes å·²ç»å¤åˆ¶äº†é¡¶ç‚¹æ•°æ®åæ‰èƒ½é”€æ¯ã€‚
+            // CombineMeshes é€šå¸¸ä¼šå¤åˆ¶æ•°æ®ï¼Œæ‰€ä»¥å¯ä»¥å®‰å…¨é”€æ¯æºç½‘æ ¼ã€‚
             Object.DestroyImmediate(topMesh);
             Object.DestroyImmediate(bottomMesh);
             Object.DestroyImmediate(leftMesh);
             Object.DestroyImmediate(rightMesh);
 
-            // 6. ¿ÉÑ¡: ÖØĞÂ¼ÆËã·¨ÏßºÍÇĞÏß£¬È·±£¹âÕÕÕıÈ·
+            // 6. å¯é€‰: é‡æ–°è®¡ç®—æ³•çº¿å’Œåˆ‡çº¿ï¼Œç¡®ä¿å…‰ç…§æ­£ç¡®
             combinedMesh.RecalculateNormals();
-            combinedMesh.RecalculateTangents(); // Èç¹ûĞèÒª·¨ÏßÌùÍ¼µÈ
+            combinedMesh.RecalculateTangents(); // å¦‚æœéœ€è¦æ³•çº¿è´´å›¾ç­‰
             combinedMesh.RecalculateBounds();
 
             return combinedMesh;
         }
 
+        /// <summary>
+        /// åˆ›å»ºä¸€ä¸ªå¹³é¢ç½‘æ ¼
+        /// </summary>
+        /// <param name="width">å®½åº¦æ­£æ•´æ•°</param>
+        /// <param name="height">é«˜åº¦æ­£æ•´æ•°</param>
+        /// <param name="unitScale">å•ä½ç¼©æ”¾</param>
+        /// <param name="trianglesShift">ä¸‰è§’å½¢åç§»</param>
+        /// <returns>åˆ›å»ºå¥½çš„å¹³é¢ç½‘æ ¼</returns>
         Mesh CreatePlaneMesh(int width, int height, float unitScale, int trianglesShift = 0)
         {
+            // åˆ›å»ºä¸€ä¸ªæ–°çš„ç½‘æ ¼å¯¹è±¡å¹¶è®¾ç½®å…¶åç§°
             Mesh mesh = new Mesh();
             mesh.name = "Plane";
+            // å¦‚æœé¡¶ç‚¹æ•°é‡è¶…è¿‡ 256 * 256ï¼Œä½¿ç”¨ UInt32 ç´¢å¼•æ ¼å¼
             if ((width + 1) * (height + 1) >= 256 * 256)
                 mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
+            // åˆå§‹åŒ–é¡¶ç‚¹ã€ä¸‰è§’å½¢å’Œæ³•çº¿æ•°ç»„
             Vector3[] vertices = new Vector3[(width + 1) * (height + 1)];
             int[] triangles = new int[width * height * 2 * 3];
             Vector3[] normals = new Vector3[(width + 1) * (height + 1)];
 
+            // è®¡ç®—å¹³é¢çš„åç§»é‡ï¼Œä½¿å¹³é¢ä¸­å¿ƒä½äºåŸç‚¹
             Vector3 offset = new Vector3(width, 0, height) * unitScale * (-0.5f);
 
+            // éå†æ‰€æœ‰é¡¶ç‚¹ï¼Œè®¾ç½®é¡¶ç‚¹ä½ç½®å’Œæ³•çº¿
             for (int i = 0; i < height + 1; i++)
             {
                 for (int j = 0; j < width + 1; j++)
@@ -509,12 +558,16 @@ namespace ATOcean
                 }
             }
 
+            // ç”¨äºè®°å½•å½“å‰ä¸‰è§’å½¢ç´¢å¼•çš„ä½ç½®
             int tris = 0;
+            // éå†æ‰€æœ‰å››è¾¹å½¢ï¼Œç”Ÿæˆä¸‰è§’å½¢
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
                 {
+                    // å½“å‰å››è¾¹å½¢çš„èµ·å§‹é¡¶ç‚¹ç´¢å¼•
                     int k = j + i * (width + 1);
+                    // æ ¹æ®åç§»é‡å†³å®šä¸‰è§’å½¢çš„ç»˜åˆ¶é¡ºåº
                     if ((i + j + trianglesShift) % 2 == 0)
                     {
                         triangles[tris++] = k;
@@ -538,13 +591,71 @@ namespace ATOcean
                 }
             }
 
+            // å°†ç”Ÿæˆçš„é¡¶ç‚¹ã€ä¸‰è§’å½¢å’Œæ³•çº¿æ•°æ®èµ‹å€¼ç»™ç½‘æ ¼
             mesh.vertices = vertices;
             mesh.triangles = triangles;
             mesh.normals = normals;
 
+            // é‡æ–°è®¡ç®—ç½‘æ ¼çš„è¾¹ç•Œ
             mesh.RecalculateBounds();
 
             return mesh;
+        }
+        #endregion
+
+
+        #region Visual 
+
+
+        public void UpdateVisual()
+        {
+            if (visual == null)
+            {
+                visual = transform.GetComponentInChildren<ATO_Visual>();
+            }
+            if (visual != null)
+            {
+                if (Input.GetKeyDown(KeyCode.G))
+                {
+                    visualizeRT  = !visualizeRT;
+                }
+
+
+                if (visualizeRT)
+                {
+                    visual.Show();
+                }
+                else
+                {
+                    visual.Hide();
+                }
+            }
+
+        }
+
+        virtual public void InitVisual()
+        {
+            if (visual == null)
+            {
+                visual = transform.GetComponentInChildren<ATO_Visual>();
+            }
+            if (visual != null)
+            {
+                CleanVisual();
+            }
+
+
+        }
+
+        public void CleanVisual()
+        {
+            if (visual == null)
+            {
+                visual = transform.GetComponentInChildren<ATO_Visual>();
+            }
+            if (visual != null)
+                visual.Clear();
+
         }
         #endregion
 
