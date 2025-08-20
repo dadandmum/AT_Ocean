@@ -5,6 +5,10 @@
 # 特定文件忽略
 /Assets/ATOcean/Output/*
 /Assets/ATOcean/Export/*
+/Train/Output/*
+/Train/models/*
+
+
 
 # Unity 相关文件夹
 /[Ll]ibrary/
