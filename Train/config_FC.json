@@ -1,0 +1,12 @@
+{
+    "data_dir": "Assets/ATOcean/Output/Gerstner_128_100_005",
+    "epochs": 100,
+    "batch_size": 16,
+    "hidden_size": [128 , 256 , 128 ],
+    "lr": 0.001,
+    "save_dir": "Train/models/modelsFC_4096",
+    "deltaT": 0.005,
+    "input_stack_num": 10,
+    "output_batch_size" : 4096
+    
+}

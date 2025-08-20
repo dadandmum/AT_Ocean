@@ -1,0 +1,12 @@
+{
+    "data_dir": "Assets/ATOcean/Output/Gerstner_128_10",
+    "epochs": 100,
+    "batch_size": 16,
+    "hidden_size": 128,
+    "num_layers": 2,
+    "rnn_type": "RNN",
+    "lr": 0.001,
+    "save_dir": "Train/modelsRNN",
+    "deltaT": 0.016,
+    "max_time_shift": 4
+}
